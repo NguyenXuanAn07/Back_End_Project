@@ -22,4 +22,4 @@ def get_db():
     try:
         yield db # yield đưa db cho ai cần dùng
     finally:
-        db.close() #đóng database lại cho kỳ kết quả thế nào ở bước cuối cùng
+        db.close() #đóng database lại cho dù kết quả thế nào ở bước cuối cùng
