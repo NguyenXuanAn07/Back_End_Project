@@ -45,7 +45,16 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:   #plain
 
 #Hàm tạo token
 def create_access_token(data: dict) -> str:   #'data: dict' : thông tin muốn nhét vào token
-    to_encode = data.copy()   #sao chép dat, không làm thay đổi bản gốc
+    to_encode = data.copy()   #sao chép data, không làm thay đổi bản gốc
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES) #tính tgian hêt hạn
     to_encode.update({"exp": expire})   #thêm tgia hết hạn vào token
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)   #jwt đóng gói tất cả thành 1 token
+
+#API đăng ký
+@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED) 
+   #@router.post: API này nhận request loại POST, "/register": đường dẫn
+   #response_model=UserOut: dữ liệu trả về theo khuôn UserOut (không có password)
+   #status_code=201: trả về mã 201=tạo mới thành công
+def register(user: UserCreate, db: Session = Depends(get_db)):   #"user: UserCreate": nhận dữ liệu từ FE, "db: session": phiên làm việc vopwis db
+                                                                 #"depends":FastAPI tự động mở session cho mình
+
