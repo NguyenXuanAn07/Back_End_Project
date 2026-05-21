@@ -57,4 +57,27 @@ def create_access_token(data: dict) -> str:   #'data: dict' : thông tin muốn 
    #status_code=201: trả về mã 201=tạo mới thành công
 def register(user: UserCreate, db: Session = Depends(get_db)):   #"user: UserCreate": nhận dữ liệu từ FE, "db: session": phiên làm việc vopwis db
                                                                  #"depends":FastAPI tự động mở session cho mình
+    existing_user = db.query(User).filter(User.mail == user.mail).first() #"db.query(User)": hỏi db cho xem bảng User, "filter(User.mail == user.mail)": lọc ra mail trùng khớp, ".first()": đưa ra kết quả đầu tiên (none nếu không có)
+    if existing_user:   #Nếu tìm thấy user
+        raise HTTPException(   #Ném ra lỗi cho frontend, raise: ném ra
+            status_code= status.HTTP_400_BAD_REQUEST,   #Mã lỗi 400 = dữ liệu không hợp lệ
+            detail = "Email was avaiable!"   #Thông báo lỗi cụ thể
+        )
+    #Mã hóa password
+    hashed = hash_password(user.password)
+
+    #Tạo user mới
+    new_user = User(
+        email = user.email,
+        password_hash = hashed,
+        full_name = user.full_name,
+        phone = user.phone,
+        address = user.address
+    )
+    #Lưu thông tin user mới vào db
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    #Trả về thông tin user: UserOut
+    return new_user
 
