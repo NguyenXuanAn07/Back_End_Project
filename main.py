@@ -4,6 +4,8 @@
 # → Gọi routers/cart.py để xử lý giỏ hàng
 # → Mở cửa đón request từ frontend
 
+#NỐI AUTH SANG MAIN.PY
+from routers import auth
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware #middleware kiểm tra/xử lý request, response trước khi đưa vào server
                                                    #nếu không có cors, FE không thể request cho BE vì hoạt động ở 2 địa chỉ khác nhau và sẽ báo lỗi
@@ -19,8 +21,10 @@ app.add_middleware(
     allow_headers=["*"],     #cho phép mọi loại header
 )
 
+app.include_router(auth.router)  #gắn tất cả API trong auth vào server, giống như lắp 1 phòng vào 1 tòa nhà
+
 #Tạo bảng tự động
-Base.metadata.create_all(bind=engine) #base có các bảng users,...; metadate chứa toàn bộ thông tin đó
+Base.metadata.create_all(bind=engine) #base có các bảng users,...; metadata chứa toàn bộ thông tin đó
                                       #create_all nhìn vào model.py tạo các bảng chưa có trong database
                                       #bind=engine tạo bảng vào đúng database mình đã kết nối
 

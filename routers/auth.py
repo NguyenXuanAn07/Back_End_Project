@@ -16,7 +16,7 @@ from models import User #1. Tìm user trong database: db.query(User).filter(User
 from schemas import UserCreate, UserOut, Token #Mang các def từ file khác sang đây để khi tạo lệnh file này có thể hiểu được
 
 #Cấu hình mã hóa password
-pwd_context = CryptContext(schemes=["bcrypt"], deprecapted="auto") #CrypContext tạo công cụ mã hóa
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") #CrypContext tạo công cụ mã hóa
                                                                    #schemes=["bcrypt"]: "bcypt" là thuật toán mã hóa phổ biến nhất
                                                                    #deprecapted="auto": nếu sau này 'bcrypt' có phiên bản mới hơn thì sẽ tự động xử lí phiên bản cũ
 
@@ -25,7 +25,7 @@ from dotenv import load_dotenv   #dotenv giúp python đọc file .env
 import os   #os là thư viện giúp python tương tác với hệ điều hành
 load_dotenv()   #đây là lúc thực sự đọc vào file .env
 
-SECRET_KEY =os.getenv("SECRET_KET")   #lấy chìa khóa bí mật để ký token
+SECRET_KEY =os.getenv("SECRET_KEy")   #lấy chìa khóa bí mật để ký token
 ALGORITHM = os.getenv("ALGORITHM")   #lấy thuật toán tạo token
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))   #lấy thời gian hết hạn token
 
@@ -50,14 +50,16 @@ def create_access_token(data: dict) -> str:   #'data: dict' : thông tin muốn 
     to_encode.update({"exp": expire})   #thêm tgia hết hạn vào token
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)   #jwt đóng gói tất cả thành 1 token
 
-#API đăng ký
+#API ĐĂNG KÝ
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED) 
    #@router.post: API này nhận request loại POST, "/register": đường dẫn
    #response_model=UserOut: dữ liệu trả về theo khuôn UserOut (không có password)
    #status_code=201: trả về mã 201=tạo mới thành công
 def register(user: UserCreate, db: Session = Depends(get_db)):   #"user: UserCreate": nhận dữ liệu từ FE, "db: session": phiên làm việc vopwis db
                                                                  #"depends":FastAPI tự động mở session cho mình
-    existing_user = db.query(User).filter(User.mail == user.mail).first() #"db.query(User)": hỏi db cho xem bảng User, "filter(User.mail == user.mail)": lọc ra mail trùng khớp, ".first()": đưa ra kết quả đầu tiên (none nếu không có)
+    print("=== REGISTER CALLED ===")  
+    print(f"Email: {user.email}")                                                                
+    existing_user = db.query(User).filter(User.email == user.email).first() #"db.query(User)": hỏi db cho xem bảng User, "filter(User.mail == user.mail)": lọc ra mail trùng khớp, ".first()": đưa ra kết quả đầu tiên (none nếu không có)
     if existing_user:   #Nếu tìm thấy user
         raise HTTPException(   #Ném ra lỗi cho frontend, raise: ném ra
             status_code= status.HTTP_400_BAD_REQUEST,   #Mã lỗi 400 = dữ liệu không hợp lệ
@@ -81,3 +83,19 @@ def register(user: UserCreate, db: Session = Depends(get_db)):   #"user: UserCre
     #Trả về thông tin user: UserOut
     return new_user
 
+#API ĐĂNG NHẬP
+@router.post("/login", response_model=Token)
+def login(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user.email).first()
+    if not db_user:
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED,
+            detail = "Email is not avaiable!"
+        )
+    if not verify_password(user.password, db_user.password_hash):
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED,
+            detail = "Wrong password!"
+        )
+    access_token = create_access_token(data={"sub": db_user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
