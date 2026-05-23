@@ -6,11 +6,15 @@
 
 #NỐI AUTH SANG MAIN.PY
 from routers import auth
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware #middleware kiểm tra/xử lý request, response trước khi đưa vào server
                                                    #nếu không có cors, FE không thể request cho BE vì hoạt động ở 2 địa chỉ khác nhau và sẽ báo lỗi
 from database import engine, Base #engine cầu nối tới PgSQl, Base là bản mẫu gốc của các bảng
 from models import User, Product, CartItem, Order, OrderItem #lấy từ model.py các bảng đã viết
+
+#NỐI CART SANG MAIN.PY
+from routers import cart
 
 app = FastAPI() #TẠO API CỦA MÌNH, từ đấy, mọi thứ đều thông qua app
 app.add_middleware(
@@ -22,6 +26,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)  #gắn tất cả API trong auth vào server, giống như lắp 1 phòng vào 1 tòa nhà
+app.include_router(cart.router)
 
 #Tạo bảng tự động
 Base.metadata.create_all(bind=engine) #base có các bảng users,...; metadata chứa toàn bộ thông tin đó
@@ -30,4 +35,4 @@ Base.metadata.create_all(bind=engine) #base có các bảng users,...; metadata 
 
 @app.get("/")   # @:gắn thêm tính năng vào hàm bên dưới, app.get: lắng nghe request loại GET, "/": đường dẫn
 def read_root():   # hàm này chạy khi có người truy cập vào "/"
-    return {"message:" "Shop APi đang chạy!"}   #VD: khi có người truy cập vào link:...., sẽ trả về return để biết là server đang hoạt động bình thường
+    return {"message": "Shop APi đang chạy!"}   #VD: khi có người truy cập vào link:...., sẽ trả về return để biết là server đang hoạt động bình thường
