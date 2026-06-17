@@ -42,3 +42,7 @@ class CartItemCreate(BaseModel):
 #Schema này dùng khi user đặt hàng (checkout)
 class OrderCreate(BaseModel):
     shipping_address: str
+
+#Cập nhật số lượng
+class CartItemUpdate(BaseModel):
+    quantity: int

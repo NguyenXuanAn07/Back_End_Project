@@ -118,3 +118,20 @@ def checkout(order: OrderCreate, db: Session = Depends(get_db), current_user: Us
     db.query(CartItem).filter(CartItem.user_id == current_user.id).delete()    #Lọc user_id của giỏ hàng = user_id gần đây, rồi xóa giỏ hàng 
     db.commit()
     return {"message": "Đặt hàng thành công!", "order_id": new_order.id, "total": total}   #trả về thông tin đơn hàng
+
+from schemas import CartItemCreate, OrderCreate, CartItemUpdate 
+
+#API4-CẬP NHẬT SỐ LƯỢNG TRONG GIỎ
+@router.put("/{product_id}", status_code=status.HTTP_200_OK)
+def update_cart_item(product_id: int, item: CartItemCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    cart_item = db.query(CartItem).filter(
+        CartItem.user_id == current_user.id,
+        CartItem.product_id == product_id
+    ).first()
+
+    if not cart_item:
+        raise HTTPException(status_code=404, detail= "Sản phẩm không có trong giỏ hàng!")
+    
+    cart_item.quantity = item.quantity
+    db.commit()
+    return {"message":"Đã cập nhật số lượng"}

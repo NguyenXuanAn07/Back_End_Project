@@ -25,7 +25,7 @@ from dotenv import load_dotenv   #dotenv giúp python đọc file .env
 import os   #os là thư viện giúp python tương tác với hệ điều hành
 load_dotenv()   #đây là lúc thực sự đọc vào file .env
 
-SECRET_KEY =os.getenv("SECRET_KEy")   #lấy chìa khóa bí mật để ký token
+SECRET_KEY =os.getenv("SECRET_KEY")   #lấy chìa khóa bí mật để ký token
 ALGORITHM = os.getenv("ALGORITHM")   #lấy thuật toán tạo token
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))   #lấy thời gian hết hạn token
 
