@@ -123,7 +123,7 @@ from schemas import CartItemCreate, OrderCreate, CartItemUpdate
 
 #API4-CẬP NHẬT SỐ LƯỢNG TRONG GIỎ
 @router.put("/{product_id}", status_code=status.HTTP_200_OK)
-def update_cart_item(product_id: int, item: CartItemCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def update_cart_item(product_id: int, item: CartItemUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     cart_item = db.query(CartItem).filter(
         CartItem.user_id == current_user.id,
         CartItem.product_id == product_id
@@ -135,3 +135,17 @@ def update_cart_item(product_id: int, item: CartItemCreate, db: Session = Depend
     cart_item.quantity = item.quantity
     db.commit()
     return {"message":"Đã cập nhật số lượng"}
+
+#API5-XÓA SẢN PHẨM KHỎI GIỎ
+@router.delete("/{product_id}", status_code=status.HTTP_200_OK)
+def delete_cart_item(product_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    cart_item = db.query(CartItem).filter(
+        CartItem.user_id == current_user.id,
+        CartItem.product_id == product_id
+    ).first()
+
+    if not cart_item:
+        raise HTTPException(status_code=401, detail="Sản phẩm không tồn tại trong giỏ hàng!")
+    db.delete(cart_item)
+    db.commit()
+    return {"message":"Đã xóa sản phẩm khỏi giỏ hàng!"}
