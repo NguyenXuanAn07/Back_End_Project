@@ -149,3 +149,30 @@ def delete_cart_item(product_id: int, db: Session = Depends(get_db), current_use
     db.delete(cart_item)
     db.commit()
     return {"message":"Đã xóa sản phẩm khỏi giỏ hàng!"}
+
+#API LẤY TẤT CẢ ĐƠN HÀNG (dùng cho trang admin)
+@router.get("/admin/orders")
+def get_all_orders(db: Session = Depends(get_db)):
+    orders = db.query(Order).all()
+    result = []
+    for order in orders:      #Với mỗi đơn, tìm user đặt hàng
+        user = db.query(User).filter(User.id == order.user_id).first()
+        items = db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
+
+        products_text = []
+        for item in items:
+            product = db.query(Product).filter(Product.id == item.product_id)
+            products_text.append(f"{product.name} x{item.quantity}")
+
+        result.append({
+            "id": order.id,
+            "customer": user.full_name or user.email,
+            "email": user.email,
+            "phone": user.phone,
+            "address": order.shipping_address,
+            "product": ", ".join(products_text),
+            "total_amount": float(order.total_amount),
+            "status": order.status,
+            "created_at": order.created_at.isoformat()
+        })
+    return result
