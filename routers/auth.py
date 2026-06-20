@@ -6,13 +6,12 @@
 #import từ FastAPI
 from fastapi import APIRouter,  Depends, HTTPException, status #apirouters: tạo nhóm api riêng, depend: khai báo phụ thuộc (cần db)
                                                                #HTTPEXCEPTION: báo lỗi cho fe, status: các mã http chuẩn
-from sqlalchemy.orm import Session #session là kiểu dữ liệu của phiên làm việc với database
+from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from jose import JWTError, jwt #jwt: công cụ tạo và đọc token, jwterror: lỗi xảy ra khi token không hợp lệ
 from passlib.context import CryptContext #cryptcontext: công cụ mã hóa và kiểm trả password           
 from database import get_db #đef dang_ky(db = Depends(get_db))        
-from models import User #1. Tìm user trong database: db.query(User).filter(User.email == email)
-                        #2. Tạo user mới: new_user = User(Email=..., password_hash=....,...)
+from models import User
 from schemas import UserCreate, UserOut, Token #Mang các def từ file khác sang đây để khi tạo lệnh file này có thể hiểu được
 
 #Cấu hình mã hóa password
@@ -21,13 +20,13 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") #CrypContext t
                                                                    #deprecapted="auto": nếu sau này 'bcrypt' có phiên bản mới hơn thì sẽ tự động xử lí phiên bản cũ
 
 #LẤY THÔNG TIN TỪ FILE .env
-from dotenv import load_dotenv   #dotenv giúp python đọc file .env
-import os   #os là thư viện giúp python tương tác với hệ điều hành
-load_dotenv()   #đây là lúc thực sự đọc vào file .env
+from dotenv import load_dotenv 
+import os   
+load_dotenv() 
 
-SECRET_KEY =os.getenv("SECRET_KEY")   #lấy chìa khóa bí mật để ký token
-ALGORITHM = os.getenv("ALGORITHM")   #lấy thuật toán tạo token
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))   #lấy thời gian hết hạn token
+SECRET_KEY =os.getenv("SECRET_KEY")  
+ALGORITHM = os.getenv("ALGORITHM")  
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 #Tạo router
 router = APIRouter(prefix="/auth", tags=["auth"]) #APIRouter: tạo nhóm API cho riêng ath
@@ -35,9 +34,8 @@ router = APIRouter(prefix="/auth", tags=["auth"]) #APIRouter: tạo nhóm API ch
                                                   #tags=["auth"]: nhóm API này hiển thị trong dóc với tên 'auth'
 
 #Hàm mã hóa password
-def hash_password(password: str) ->str:   #nhận vào 1 password dạng chuỗi, -> str: trả về 1 chuỗi(chuỗi hash)
-    return pwd_context.hash(password)    #dùng pwd_context để mã hóa (dùng "máy xay")
-                                         #VD: hash_password("123456") -> "hdshfhiu43812Z^&"
+def hash_password(password: str) ->str: 
+    return pwd_context.hash(password)  
 
 #Hàm kiểm tra password
 def verify_password(plain_password: str, hashed_password: str) -> bool:   #plain: pass vừa nhập, hashed: đã lưu trong db
@@ -52,18 +50,13 @@ def create_access_token(data: dict) -> str:   #'data: dict' : thông tin muốn 
 
 #API ĐĂNG KÝ
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED) 
-   #@router.post: API này nhận request loại POST, "/register": đường dẫn
-   #response_model=UserOut: dữ liệu trả về theo khuôn UserOut (không có password)
-   #status_code=201: trả về mã 201=tạo mới thành công
-def register(user: UserCreate, db: Session = Depends(get_db)):   #"user: UserCreate": nhận dữ liệu từ FE, "db: session": phiên làm việc vopwis db
-                                                                 #"depends":FastAPI tự động mở session cho mình
-    print("=== REGISTER CALLED ===")  
+def register(user: UserCreate, db: Session = Depends(get_db)): 
     print(f"Email: {user.email}")                                                                
     existing_user = db.query(User).filter(User.email == user.email).first() #"db.query(User)": hỏi db cho xem bảng User, "filter(User.mail == user.mail)": lọc ra mail trùng khớp, ".first()": đưa ra kết quả đầu tiên (none nếu không có)
     if existing_user:   #Nếu tìm thấy user
-        raise HTTPException(   #Ném ra lỗi cho frontend, raise: ném ra
-            status_code= status.HTTP_400_BAD_REQUEST,   #Mã lỗi 400 = dữ liệu không hợp lệ
-            detail = "Email was avaiable!"   #Thông báo lỗi cụ thể
+        raise HTTPException(   
+            status_code= status.HTTP_400_BAD_REQUEST,
+            detail = "Email was avaiable!"   
         )
     #Mã hóa password
     hashed = hash_password(user.password)

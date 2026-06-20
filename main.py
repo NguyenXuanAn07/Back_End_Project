@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware #middleware kiểm tra/xử lý request, response trước khi đưa vào server
                                                    #nếu không có cors, FE không thể request cho BE vì hoạt động ở 2 địa chỉ khác nhau và sẽ báo lỗi
 from database import engine, Base #engine cầu nối tới PgSQl, Base là bản mẫu gốc của các bảng
-from models import User, Product, CartItem, Order, OrderItem #lấy từ model.py các bảng đã viết
+from models import User, Product, CartItem, Order, OrderItem 
 
 #NỐI CART SANG MAIN.PY
 from routers import cart
@@ -19,10 +19,10 @@ from routers import cart
 app = FastAPI() #TẠO API CỦA MÌNH, từ đấy, mọi thứ đều thông qua app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],      #cho phép mọi nguồn gọi vào
-    allow_credentials=True,  #cho phép gửi kèm token/cookie
-    allow_methods=["*"],     #cho phép mọi loại request (GET, POST, PUT, DELETE,...)
-    allow_headers=["*"],     #cho phép mọi loại header
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(auth.router)  #gắn tất cả API trong auth vào server, giống như lắp 1 phòng vào 1 tòa nhà

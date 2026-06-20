@@ -1,4 +1,4 @@
-#GIỎ HÀNG VÀ ĐẶT HÀNG
+﻿#GIỎ HÀNG VÀ ĐẶT HÀNG
 #cart.py xử lý 3 việc:
 #1. Thêm sản phẩm vào giỏ
 #2. Xem giỏ hàng
@@ -12,6 +12,7 @@ from models import User, Product, CartItem, Order, OrderItem
 from schemas import CartItemCreate, OrderCreate
 from fastapi.security import OAuth2PasswordBearer   #OAuth2PasswordBearer: công cụ lấy Token từ request, đưa cho def get_current_user kiểm tra
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")   #'tokenUrl="/auth/login"': chỉ định link đăng nhập để lấy token
+from schemas import CartItemCreate, OrderCreate, CartItemUpdate 
 
 #Lấy thông tin từ file .env
 from dotenv import load_dotenv
@@ -89,6 +90,7 @@ def get_cart(db: Session = Depends(get_db), current_user: User = Depends(get_cur
 #API3-ĐẶT HÀNG(CHECKOUT)
 @router.post("/checkout", status_code=status.HTTP_201_CREATED)
 def checkout(order: OrderCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    print("=== CHECKOUT ĐƯỢC GỌI ===")
     cart_items = db.query(CartItem).filter(CartItem.user_id == current_user.id).all()   #Lấy giỏ hàng của user để check
     if not cart_items:   #hàm báo giỏ trống
         raise HTTPException(status_code=400, detail = "Giỏ hàng trống!")
@@ -117,9 +119,8 @@ def checkout(order: OrderCreate, db: Session = Depends(get_db), current_user: Us
         product.stock -= item.quantity   #Trừ tồn kho của từng item
     db.query(CartItem).filter(CartItem.user_id == current_user.id).delete()    #Lọc user_id của giỏ hàng = user_id gần đây, rồi xóa giỏ hàng 
     db.commit()
-    return {"message": "Đặt hàng thành công!", "order_id": new_order.id, "total": total}   #trả về thông tin đơn hàng
+    return {"message": "Đặt hàng thành công!", "order_id": new_order.id, "total": float(total)}   #trả về thông tin đơn hàng
 
-from schemas import CartItemCreate, OrderCreate, CartItemUpdate 
 
 #API4-CẬP NHẬT SỐ LƯỢNG TRONG GIỎ
 @router.put("/{product_id}", status_code=status.HTTP_200_OK)
@@ -161,7 +162,7 @@ def get_all_orders(db: Session = Depends(get_db)):
 
         products_text = []
         for item in items:
-            product = db.query(Product).filter(Product.id == item.product_id)
+            product = db.query(Product).filter(Product.id == item.product_id).first()
             products_text.append(f"{product.name} x{item.quantity}")
 
         result.append({
