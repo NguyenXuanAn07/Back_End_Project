@@ -90,24 +90,26 @@ def get_cart(db: Session = Depends(get_db), current_user: User = Depends(get_cur
 #API3-ĐẶT HÀNG(CHECKOUT)
 @router.post("/checkout", status_code=status.HTTP_201_CREATED)
 def checkout(order: OrderCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    print("=== CHECKOUT ĐƯỢC GỌI ===")
-    cart_items = db.query(CartItem).filter(CartItem.user_id == current_user.id).all()   #Lấy giỏ hàng của user để check
-    if not cart_items:   #hàm báo giỏ trống
+    cart_items = db.query(CartItem).filter(CartItem.user_id == current_user.id).all()
+    if not cart_items:
         raise HTTPException(status_code=400, detail = "Giỏ hàng trống!")
     total = 0
-    for item in cart_items:   #Hàm tính tổng tiền
-        product = db.query(Product).filter(Product.id == item.product_id).first()   #lấy danh sách products
-        total += product.price * item.quantity   #tổng tiền
-    new_order = Order(     #Tạo đơn hàng mới
+    for item in cart_items:
+        product = db.query(Product).filter(Product.id == item.product_id).first()
+        if not product:
+            raise HTTPException(status_code=400, detail = f"Sản phẩm ID {item.product_id} không còn tồn tại!")
+        if product.stock < item.quantity:
+            raise HTTPException(status_code=400, detail = f"Sản phẩm {product.name} không đủ hàng!")
+        total += product.price * item.quantity
+    new_order = Order(
         user_id = current_user.id,
         total_amount = total,
         shipping_address = order.shipping_address,
         status = "pending"
     )
     db.add(new_order)
-    db.commit()
-    db.refresh(new_order)
-    for item in cart_items:   #hàm lưu chi tiết của sản phẩm -> Trừ tồn kho
+    db.flush()
+    for item in cart_items:
         product = db.query(Product).filter(Product.id == item.product_id).first()
         order_item = OrderItem(
             order_id = new_order.id,
@@ -115,11 +117,12 @@ def checkout(order: OrderCreate, db: Session = Depends(get_db), current_user: Us
             quantity = item.quantity,
             price_at_order = product.price
         )
-        db.add(order_item)    #thêm vào db để trừ tồn kho của từng item trong order_item
-        product.stock -= item.quantity   #Trừ tồn kho của từng item
-    db.query(CartItem).filter(CartItem.user_id == current_user.id).delete()    #Lọc user_id của giỏ hàng = user_id gần đây, rồi xóa giỏ hàng 
+        db.add(order_item)
+        product.stock -= item.quantity
+    db.query(CartItem).filter(CartItem.user_id == current_user.id).delete()
     db.commit()
-    return {"message": "Đặt hàng thành công!", "order_id": new_order.id, "total": float(total)}   #trả về thông tin đơn hàng
+    db.refresh(new_order)
+    return {"message": "Đặt hàng thành công!", "order_id": new_order.id, "total": float(total)}
 
 
 #API4-CẬP NHẬT SỐ LƯỢNG TRONG GIỎ
@@ -167,7 +170,7 @@ def get_all_orders(db: Session = Depends(get_db)):
 
         result.append({
             "id": order.id,
-            "customer": user.full_name or user.email,
+            "customer": user.email,
             "email": user.email,
             "phone": user.phone,
             "address": order.shipping_address,

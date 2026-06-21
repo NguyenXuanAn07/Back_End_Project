@@ -12,7 +12,7 @@ from jose import JWTError, jwt #jwt: công cụ tạo và đọc token, jwterror
 from passlib.context import CryptContext #cryptcontext: công cụ mã hóa và kiểm trả password           
 from database import get_db #đef dang_ky(db = Depends(get_db))        
 from models import User
-from schemas import UserCreate, UserOut, Token #Mang các def từ file khác sang đây để khi tạo lệnh file này có thể hiểu được
+from schemas import UserCreate, UserOut, Token, UserLogin #Mang các def từ file khác sang đây để khi tạo lệnh file này có thể hiểu được
 
 #Cấu hình mã hóa password
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") #CrypContext tạo công cụ mã hóa
@@ -78,7 +78,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 #API ĐĂNG NHẬP
 @router.post("/login", response_model=Token)
-def login(user: UserCreate, db: Session = Depends(get_db)):
+def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user:
         raise HTTPException(
